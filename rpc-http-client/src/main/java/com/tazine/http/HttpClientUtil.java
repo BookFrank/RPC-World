@@ -28,7 +28,6 @@ import java.net.UnknownHostException;
  */
 public class HttpClientUtil {
 
-
     private static final int MAX_RETRY_TIMES = 5;
 
     CloseableHttpClient httpClient = HttpClients.custom()
