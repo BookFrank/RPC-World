@@ -35,18 +35,26 @@ public class HttpClientDemo {
                 .setConnectTimeout(10000)
                 .setSocketTimeout(10000)
                 .build();
-        httpGet.setConfig(requestConfig);
 
+        httpGet.setConfig(requestConfig);
+        CloseableHttpResponse response = null;
         try {
-            CloseableHttpResponse response = httpClient.execute(httpGet);
+            response = httpClient.execute(httpGet);
             StatusLine statusLine = response.getStatusLine();
             if (statusLine.getStatusCode() == 200) {
                 String body = EntityUtils.toString(response.getEntity());
                 System.out.println(body);
             }
-            response.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (null != response){
+                try {
+                    response.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return null;
     }
