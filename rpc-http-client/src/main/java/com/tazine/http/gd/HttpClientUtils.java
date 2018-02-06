@@ -1,26 +1,29 @@
 package com.tazine.http.gd;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * HttpClientUtils
@@ -58,8 +61,8 @@ public class HttpClientUtils {
             }
             if (e instanceof UnknownHostException) {
                 // Unknown host
-                //System.out.println("Unknown host exception");
-                //return false;
+                System.out.println("Unknown host exception");
+                return false;
             }
             if (e instanceof ConnectTimeoutException) {
                 // Connection refused
@@ -117,21 +120,79 @@ public class HttpClientUtils {
     }
 
     public static void get(String url){
-        CloseableHttpClient httpClient = getConnection();
-
-        HttpGet httpGet = new HttpGet(url);
-
-        CloseableHttpResponse response = null;
+        CloseableHttpClient httpClient = null;
         try {
-            response = httpClient.execute(httpGet);
-            HttpEntity entity = response.getEntity();
-            System.out.println(EntityUtils.toString(entity));
-        } catch (IOException e){
+            httpClient = getConnection();
+
+            HttpGet httpGet = new HttpGet(url);
+            CloseableHttpResponse response = null;
+            try {
+                response = httpClient.execute(httpGet);
+                HttpEntity entity = response.getEntity();
+                System.out.println(EntityUtils.toString(entity));
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (null != response) {
+                    try {
+                        response.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            // 关闭连接，释放资源
+            if (null != httpClient){
+                try {
+                    httpClient.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static void post(String url){
+        CloseableHttpClient httpClient = null;
+
+        // 创建 HttpClient 实例
+        httpClient = getConnection();
+        // 创建 HttpPost
+        HttpPost httpPost = new HttpPost(url);
+        // 创建参数队列
+        List<NameValuePair> formParams = new ArrayList<>();
+        formParams.add(new BasicNameValuePair("type", "house"));
+        UrlEncodedFormEntity urlEncodedFormEntity = null;
+        try {
+            urlEncodedFormEntity = new UrlEncodedFormEntity(formParams, "UTF-8");
+            httpPost.setEntity(urlEncodedFormEntity);
+            CloseableHttpResponse response = null;
+            try {
+               response = httpClient.execute(httpPost);
+               HttpEntity entity = response.getEntity();
+               if (null != entity){
+                   System.out.println(EntityUtils.toString(entity));
+               }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (null != response){
+                    try {
+                        response.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         } finally {
-            if (null != response){
+            if (null != httpClient){
                 try {
-                    response.close();
+                    httpClient.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -140,6 +201,7 @@ public class HttpClientUtils {
     }
 
     public static void main(String[] args) {
-        HttpClientUtils.get("http://www.tazine2.com");
+        //HttpClientUtils.get("http://www.tazine2.com");
+        HttpClientUtils.post("http://124.251.25.20:91/mana/hmset");
     }
 }
